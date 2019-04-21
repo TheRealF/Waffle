@@ -1,0 +1,11 @@
+{
+    "token": "token-here",
+    "addrole": "role to give when user joins",
+    "welcomedm": "Welcome message",
+    "prefix": "!",
+    "log": "log channel name",
+    "admin": "Admin role name",
+    "mod": "Moderator role name",
+    "time": "Voting timeout",
+    "hello: "Array of possible answers"
+}
