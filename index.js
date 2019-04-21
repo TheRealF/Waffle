@@ -3,11 +3,15 @@
 // Import the discord.js module
 const Discord = require("discord.js");
 const client = new Discord.Client();
+const {
+    Client,
+    RichEmbed
+} = require('discord.js');
 const config = require("./config.json");
 
 client.on("ready", () => {
   console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`);
-  client.user.setActivity(`Serving ${client.guilds.size} servers`);
+  client.user.setActivity(`-help | I live in ${client.guilds.size} servers`);
 });
 
 client.on("guildCreate", guild => {
@@ -29,7 +33,7 @@ client.on('guildMemberAdd', member => {
 });
 client.on('guildMemberRemove', member => {
     var x = member.user.tag;
-    client.channels.find(chan => chan.name === config.log).send(`**${x}** left the server`);
+    client.channels.find(chan => chan.id === config.log).send(`**${x}** left the server`);
 });
 client.on("message", async message => {
   if(message.author.bot) return;
@@ -43,6 +47,8 @@ client.on("message", async message => {
   }
 
   if(command === "say") {
+        if(!message.member.roles.some(role=>[config.admin].includes(role.name)) )
+      return message.reply("Sorry, you don't have permissions to use this command!");
     const sayMessage = args.join(" ");
     message.delete().catch(O_o=>{});
     message.channel.send(sayMessage);
@@ -84,7 +90,8 @@ client.on("message", async message => {
   }
 
   if(command === "clean") {
-
+    if(!message.member.roles.some(role=>[config.admin].includes(role.name)) )
+      return message.reply("Sorry, you don't have permissions to use this!");
     const deleteCount = parseInt(args[0], 10);
     if(!deleteCount || deleteCount < 2 || deleteCount > 100)
       return message.reply("Please provide a number between 2 and 100 for the number of messages to delete");
@@ -93,14 +100,17 @@ client.on("message", async message => {
     message.channel.bulkDelete(fetched)
       .catch(error => message.reply(`Couldn't delete messages because of: ${error}`));
   }
-  if (command === ("hello" || "hi" || "hey")) {
+  if (command === "hello") {
       let options = config.hello;
       let response = options[Math.floor(Math.random() * options.length)];
       message.channel.send(response).then().catch(error => message.reply(`Error: ${error}`));
 
   }
   if (command === "birthday") {
-      message.channel.send(message.guild.createdAt);
+      let bir = message.guild.createdAt;
+      let guildName = message.guild.name;
+      if(!bir) return message.reply("Unknown");
+      message.channel.send(guildName+" created at: "+bir);
   }
   if (command === "show") {
       let c = message.guild.channels;
@@ -108,7 +118,7 @@ client.on("message", async message => {
       c.sweep(b => b.type == "category" || b.type == "voice")
       let t = c.array();
       let print = t.sort((a, b) => a.position - b.position);
-      message.channel.send("**"+guildName+" CHANNELS LIST:**\n\n"+print);
+      message.channel.send("**"+guildName+"\nCHANNELS LIST:**\n\n"+print);
   }
 
 
@@ -135,7 +145,7 @@ client.on("message", async message => {
           // Set the color of the embed
           .setColor(0xFFFF66)
           // Set the main content of the embed
-          .setDescription('Voting will close'+((config.time /1000) /60)+ 'in minutes.\n Minimum 👍 required for approval: ' + minvotes)
+          .setDescription('Voting will close in '+((config.time /1000) /60)+ 'minutes.\n Minimum 👍 required for approval: ' + minvotes)
 
           .setFooter("Requested by " + requester);
       // Send the embed to the same channel as the message
@@ -172,7 +182,7 @@ client.on("message", async message => {
                       name: idprint,
                       color: 'GREEN',
                   })
-                  .then(role => console.log(`Created new role and channel with name ${role.name} and color ${role.color}`))
+                  .then(role => message.channel.send(`Created new role with name ${role.name} and color ${role.color}`))
                   .catch(console.error)
 
               message.guild.createChannel(idprint, "category")
@@ -219,9 +229,9 @@ client.on("message", async message => {
                           channel1 = message.guild.channels.find(c => c.name == idprint && c.type == "text"),
                           voice1 = message.guild.channels.find(c => c.name == idvoice && c.type == "voice"); //Find the channel name
                       if (category1 && channel1) channel1.setParent(category1.id); //Set parent category of the new channel
-                      else console.error(`One of the channels is missing:\nCategory: ${!!category1}\nChannel: ${!!channel1}`);
+                      else message.reply(`One of the channels is missing:\nCategory: ${!!category1}\nChannel: ${!!channel1}`);
                       if (category1 && voice1) voice1.setParent(category1.id); //Set parent category of the new channel
-                      else console.error(`One of the channels is missing:\nCategory: ${!!category1}\nChannel: ${!!channel1}`);
+                      else message.reply(`One of the channels is missing:\nCategory: ${!!category1}\nChannel: ${!!channel1}`);
                       const embed2 = new RichEmbed() //Create the embed message to send as a reply
                           // Set the title of the field
                           .setTitle('New Channel created')
@@ -257,29 +267,34 @@ client.on("message", async message => {
   if (command === "request") {
       let requester = message.author.username;
       let check = message.author;
-      let chan = message.mentions.channels.first();
+      let t = args.join(" ");
+      let chan = message.guild.channels.find(y => y.name == t);
       if(!check || !chan || !requester)
-      return message.reply("Error")
+      return message.reply("No valid channel or request has failed. Remember to write channel name without #")
       if (chan.permissionsFor(check).has('VIEW_CHANNEL')) {
-          message.channel.send("You have already have access to " + chan);
+          message.channel.send("You have already access to " + chan);
       } else {
           message.channel.send("Request sent in " + chan);
           chan.send("@" + requester + " requested to be added to " + chan);
       }
 }
       if (command === "add") {
-          let u = args.join(" ");
-          let useradd = message.guild.members.find(m => m.username == u)
-          let roleName = message.channel.name;
+          let useradd = message.mentions.members.first();
+          let roleName = args.slice(1).join(' ');
           let guildname = message.guild.name;
           let role = message.guild.roles.find(x => x.name == roleName);
+          let chan = message.guild.channels.find(x => x.name == roleName);
+          if (chan.permissionsFor(useradd).has('VIEW_CHANNEL'))
+          return message.reply("that user has already access to " + chan);
+          if(!chan)
+          return message.reply(chan+" is not a valid channel. Remember to write channel name without # ");
           if (!useradd)
-          return message.reply("Cannot find any user with this username. Write only username");
+          return message.reply("cannot find any user with this username. Write only username");
           if (!role)
           return message.reply(roleName + "role does not exist in " + guildname + " yet");
           if(useradd){
-                  await useradd.addRole(role);
-                  .catch(error => message.reply(`Sorry ${message.author} I couldn't add ${useradd} because of : ${error}`));
+                  await useradd.addRole(role)
+                       .catch(error => message.reply(`Sorry ${message.author} I couldn't add ${useradd} because of : ${error}`));
                   message.reply(`${useradd} has been added to ${roleName}`);
           }
           }
@@ -290,7 +305,7 @@ client.on("message", async message => {
           // Set the color of the embed
           .setColor(0x76ecde)
           // Set the main content of the embed
-          .setDescription("  -new ChannelName\n```Request the creation of a new channel```\n-add Member\n```Add a member in the channel where the command is typed in```\n-show\n```List all text channels```\n-request #ChannelName\n```Request to be added in a channel```\n-ping \n```Bot ping time in ms```\n-birthday \n```Shows WAF anniversary```");
+          .setDescription("  -new ChannelName\n```Request the creation of a new channel```\n-add MemberMention ChannelName\n```Add a member in a channel```\n-show\n```List all text channels in the server```\n-request ChannelName\n```Request to be added in a channel```\n-ping \n```Ping time in ms```\n-birthday \n```Shows Server creation date```\n-hello \n```Say hello```\n-say \n```Let the bot say something```\n-kick MemberMention Reason(optional) \n```Kick the mentioned member```\n-ban MemberMention Reason(optional) \n```Ban the mentioned member```\n-clear Number \n```Delete previous messages```");
       // Send the embed to the same channel as the message
       message.channel.send(embed);
 }

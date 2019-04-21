@@ -1,11 +1,11 @@
 {
     "token": "token-here",
     "addrole": "role to give when user joins",
-    "welcomedm": "Welcome message",
+    "welcomedm": "Welcome DM message",
     "prefix": "!",
-    "log": "log channel name",
+    "log": "log channel id",
     "admin": "Admin role name",
     "mod": "Moderator role name",
-    "time": "Voting timeout",
+    "time": "Voting timeout in ms",
     "hello: "Array of possible answers"
 }
