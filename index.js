@@ -89,7 +89,7 @@ client.on("message", async message => {
     message.reply(`${member.user.tag} has been banned by ${message.author.tag} because: ${reason}`);
   }
 
-  if(command === "clean") {
+  if(command === "clear") {
     if(!message.member.roles.some(role=>[config.admin].includes(role.name)) )
       return message.reply("Sorry, you don't have permissions to use this!");
     const deleteCount = parseInt(args[0], 10);
@@ -145,7 +145,7 @@ client.on("message", async message => {
           // Set the color of the embed
           .setColor(0xFFFF66)
           // Set the main content of the embed
-          .setDescription('Voting will close in '+((config.time /1000) /60)+ 'minutes.\n Minimum 👍 required for approval: ' + minvotes)
+          .setDescription('Voting will close in '+((config.time /1000) /60)+ ' minutes.\n Minimum 👍 required for approval: ' + minvotes)
 
           .setFooter("Requested by " + requester);
       // Send the embed to the same channel as the message
